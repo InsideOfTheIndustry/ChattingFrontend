@@ -1,0 +1,29 @@
+.loginPageFullStyle {
+    height: 100vh;
+    background: url('../../../assets/bgi-1.jpg') no-repeat;
+    
+}
+
+
+
+.loginformPostion {
+    top: calc(50vh - 150px);
+    right: 200px;
+    width: 400px;
+    height: 200px;
+    text-align: center;
+    position: absolute;
+}
+
+.iconPosition {
+    top: calc(50vh - 200px);
+    left: 200px;
+    width: 400px;
+    height: 400px;
+    position: absolute;
+    background: url('../../../assets/chaticon.jpg') no-repeat;
+}
+
+.loginText {
+    font-weight: bold;
+}

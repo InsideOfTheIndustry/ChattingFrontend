@@ -1,0 +1,13 @@
+.registerform{
+  width: 400px;
+  top: 20vh;
+  left: 36vw;
+  position: relative;
+}
+
+.registerPageFullStyle {
+  height: 100vh;
+  background: url('../../../assets/bgi-1.jpg') no-repeat;
+  opacity: 0.7;
+  
+}

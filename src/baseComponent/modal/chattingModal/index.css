@@ -1,0 +1,46 @@
+.chattingarea{
+  height: 30vh;
+  min-height: 300px;
+  overflow: auto;
+}
+
+.inputarea{
+  height: 20vh;
+  min-height: 150px;
+}
+
+.chattingmessagefriend{
+  background: white;
+}
+
+.chattingmessageme{
+  background: rgb(255, 255, 255);
+}
+
+.chattingmessage{
+  display:inline-block;
+  max-width: 200px;
+  height: 70px;
+}
+
+.chattingmessagepopfriend{
+  border: 0.5px solid rgb(31, 168, 192);
+  max-width: 200px;
+  border-radius: 10px;
+  padding: 5px 5px;
+  margin: 4px;
+}
+
+.chattingmessagepopme{
+  display:inline-block;
+  border: 0.5px solid rgb(31, 168, 192);
+  max-width: 200px;
+  border-radius: 10px;
+  padding: 5px 5px;
+  margin: 4px;
+}
+
+.chattingmessagename{
+  max-width: 200px;
+  height: 20px;
+}

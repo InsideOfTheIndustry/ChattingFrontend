@@ -1,0 +1,48 @@
+.friendlist {
+  overflow: auto;
+  height: calc(100vh - 300px);
+}
+
+.usertabfoot {
+  bottom: 0px;
+  min-height: 40px;
+  height: 40px;
+  position: absolute;
+}
+
+.subtab {
+  overflow: auto;
+  overflow-x: hidden;
+  min-height: 300px;
+  max-height: 450px;
+  width: 300px;
+}
+
+.friendsmaincontent {
+  /* border-top: 1px solid #13e0e7;
+  border-bottom: 1px solid #13e0e7; */
+  min-height: 400px;
+}
+
+.singfriend {
+  height: 45px;
+  cursor: default;
+  user-select: none;
+}
+
+.singfriendcontenthover {
+  height: 45px;
+  margin-top: 22.5px;
+}
+
+.singfriendcontentleave {
+  height: 45px;
+  margin-top: 11px;
+}
+
+.friendinfoavatar {
+  display: inline-block;
+  cursor: pointer;
+  height: 60px;
+  width: 60px;
+}
