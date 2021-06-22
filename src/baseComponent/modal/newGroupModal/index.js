@@ -20,11 +20,15 @@ class CreateNewGroupModal extends React.Component {
   static propsTypes = {
     visible: PropTypes.bool,
     handleOnCancel: PropTypes.func,
+    userAccount: PropTypes.string,
+    createNewGroup: PropTypes.func,
   };
 
   static defaultProps = {
     visible: false,
     handleOnCancel() {},
+    userAccount: '',
+    createNewGroup() {},
   };
 
   constructor(props) {
@@ -34,6 +38,8 @@ class CreateNewGroupModal extends React.Component {
     };
 
     this.handleOnCancel = this.handleOnCancel.bind(this);
+    this.sendVerificationcode = this.sendVerificationcode.bind(this);
+    this.createNewGroup = this.createNewGroup.bind(this);
   }
 
   handleOnCancel() {
@@ -42,31 +48,32 @@ class CreateNewGroupModal extends React.Component {
 
   // 发送验证码
   sendVerificationcode() {
-    this.formRef.current
-      .validateFields(['useremail'])
-      .then((value) => {
-        this.props.sendVerificationcode(value.useremail);
-        var count = 60;
-        var intervalVerificationCode = setInterval(() => {
-          count -= 1;
-          this.setState({
-            buttonName: String(count) + 's后重新发送',
-          });
-          if (count <= 0) {
-            clearInterval(intervalVerificationCode);
-            this.setState({
-              buttonName: '发送验证码',
-            });
-          }
-        }, 1000);
-      })
-      .catch((info) => {
-        message.error({
-          placement: 'bottomRight',
-          message: '邮箱验证失败',
-          description: '具体失败原因为：' + JSON.stringify(info.errorFields, null, 4),
-        });
+    this.props.sendVerificationcode(this.props.userAccount);
+    var count = 60;
+    var intervalVerificationCode = setInterval(() => {
+      count -= 1;
+      this.setState({
+        buttonName: String(count) + 's后重新发送',
       });
+      if (count <= 0) {
+        clearInterval(intervalVerificationCode);
+        this.setState({
+          buttonName: '发送验证码',
+        });
+      }
+    }, 1000);
+  }
+
+  // 创建群聊
+  createNewGroup() {
+    this.formRef.current.validateFields().then((value) => {
+      this.props.createNewGroup(
+        this.props.userAccount,
+        value.groupname,
+        value.verificationcode,
+        value.groupintro
+      );
+    });
   }
 
   render() {
@@ -75,28 +82,15 @@ class CreateNewGroupModal extends React.Component {
         <div className={'newgroup'}>
           <Form {...layout} ref={this.formRef}>
             <Form.Item
-              label='邮箱'
-              name='useremail'
-              rules={[
-                {
-                  required: true,
-                  message: '请输入您的邮箱!',
-                  pattern: /^[\w\-]+@[a-zA-Z\d\-]+(\.[a-zA-Z]{2,8}){1,2}$/,
-                },
-              ]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
               label='群名称'
-              name='username'
+              name='groupname'
               rules={[{ required: true, message: '请输入群聊名称!' }]}
             >
               <Input />
             </Form.Item>
             <Form.Item
               label='群简介'
-              name='userintro'
+              name='groupintro'
               rules={[{ required: true, message: '请输入群聊简介!' }]}
             >
               <Input />
@@ -115,7 +109,7 @@ class CreateNewGroupModal extends React.Component {
             </Form.Item>
           </Form>
           <Row justify='center'>
-            <Button type='primary' onClick={this.register}>
+            <Button type='primary' onClick={this.createNewGroup}>
               创建
             </Button>
           </Row>
