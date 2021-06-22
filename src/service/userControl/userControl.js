@@ -30,7 +30,7 @@ export async function UserLogin(useraccount, userpassword) {
     method: 'post',
   }).catch(function (error) {
     if (error.response) {
-      responseerror = error.response.data;
+      var responseerror = error.response.data;
       errNotification('登录失败!', responseerror.code, responseerror.message);
     }
   });

@@ -25,6 +25,7 @@ const { Sider, Content } = Layout;
 //const Websocket_Url = window.apiConfig.Websocket_Url;
 
 @inject('userLoginStore')
+@inject('groupStore')
 @observer
 class ChattingPage extends React.Component {
   constructor(props) {
@@ -61,6 +62,7 @@ class ChattingPage extends React.Component {
     };
 
     this.userStore = this.props.userLoginStore;
+    this.groupStore = this.props.groupStore;
 
     this.onOpenChattingModal = this.onOpenChattingModal.bind(this);
     this.onCloseChattingModal = this.onCloseChattingModal.bind(this);
@@ -82,6 +84,9 @@ class ChattingPage extends React.Component {
     this.onCancelEditUserinfoModal = this.onCancelEditUserinfoModal.bind(this);
     this.onUpdateUserinfo = this.onUpdateUserinfo.bind(this);
     this.onOpenCreateNewGroupModal = this.onOpenCreateNewGroupModal.bind(this);
+    this.sendGroupCreateVerificationcode = this.sendGroupCreateVerificationcode.bind(this);
+    this.createNewGroup = this.createNewGroup.bind(this);
+    this.onCloseCreateNewGroupModal = this.onCloseCreateNewGroupModal.bind(this);
   }
 
   async componentDidMount() {
@@ -832,6 +837,48 @@ class ChattingPage extends React.Component {
     });
   }
 
+  // 打开创建群聊页面
+  onCloseCreateNewGroupModal() {
+    this.setState({
+      createNewGroupModalVisible: false,
+    });
+  }
+
+  // 发送群聊创建验证码
+  async sendGroupCreateVerificationcode(useraccount) {
+    await this.groupStore.SendGroupCreateVerifyCodeEmail(
+      localStorage.getItem(useraccount + 'token'),
+      useraccount
+    );
+  }
+
+  // 创建群聊
+  async createNewGroup(useraccount, groupname, verificationcode, groupintro) {
+    var response = await this.groupStore.CreateNewGroup(
+      localStorage.getItem(useraccount + 'token'),
+      useraccount,
+      groupname,
+      verificationcode,
+      groupintro
+    );
+
+    if (typeof response === 'undefined' || response === false) {
+      return;
+    }
+    await this.userStore.GetUserGroupInfo(
+      localStorage.getItem(String(useraccount) + 'token'),
+      useraccount
+    );
+    await this.userStore.GetUserInfo(
+      localStorage.getItem(String(useraccount) + 'token'),
+      useraccount,
+      useraccount
+    );
+    this.setState({
+      createNewGroupModalVisible: false,
+    });
+  }
+
   render() {
     const { userInfo } = this.state;
     return (
@@ -898,7 +945,13 @@ class ChattingPage extends React.Component {
           updataInfo={this.onUpdateUserinfo}
           userinfo={userInfo}
         ></UserInfoEditModal>
-        <CreateNewGroupModal visible={this.state.createNewGroupModalVisible}></CreateNewGroupModal>
+        <CreateNewGroupModal
+          visible={this.state.createNewGroupModalVisible}
+          userAccount={this.state.account}
+          sendVerificationcode={this.sendGroupCreateVerificationcode}
+          createNewGroup={this.createNewGroup}
+          handleOnCancel={this.onCloseCreateNewGroupModal}
+        ></CreateNewGroupModal>
       </Layout>
     );
   }
