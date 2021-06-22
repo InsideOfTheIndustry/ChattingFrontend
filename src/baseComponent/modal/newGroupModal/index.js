@@ -35,6 +35,8 @@ class CreateNewGroupModal extends React.Component {
     super(props);
     this.state = {
       buttonName: '获取验证码',
+      verifyCodeButton: false,
+      createNewGroupButton: false,
     };
 
     this.handleOnCancel = this.handleOnCancel.bind(this);
@@ -48,6 +50,9 @@ class CreateNewGroupModal extends React.Component {
 
   // 发送验证码
   sendVerificationcode() {
+    this.setState({
+      verifyCodeButton: true,
+    });
     this.props.sendVerificationcode(this.props.userAccount);
     var count = 60;
     var intervalVerificationCode = setInterval(() => {
@@ -59,6 +64,7 @@ class CreateNewGroupModal extends React.Component {
         clearInterval(intervalVerificationCode);
         this.setState({
           buttonName: '发送验证码',
+          verifyCodeButton: false,
         });
       }
     }, 1000);
@@ -66,6 +72,8 @@ class CreateNewGroupModal extends React.Component {
 
   // 创建群聊
   createNewGroup() {
+    var count = 5;
+    this.setState({ createNewGroupButton: true });
     this.formRef.current.validateFields().then((value) => {
       this.props.createNewGroup(
         this.props.userAccount,
@@ -74,6 +82,16 @@ class CreateNewGroupModal extends React.Component {
         value.groupintro
       );
     });
+
+    var intervalVerificationCode = setInterval(() => {
+      count -= 1;
+      if (count <= 0) {
+        clearInterval(intervalVerificationCode);
+        this.setState({
+          createNewGroupButton: false,
+        });
+      }
+    }, 1000);
   }
 
   render() {
@@ -102,14 +120,22 @@ class CreateNewGroupModal extends React.Component {
             >
               <Space>
                 <Input style={{ width: 220 }} />
-                <Button type={'primary'} onClick={this.sendVerificationcode}>
+                <Button
+                  type={'primary'}
+                  onClick={this.sendVerificationcode}
+                  disabled={this.state.verifyCodeButton}
+                >
                   {this.state.buttonName}
                 </Button>
               </Space>
             </Form.Item>
           </Form>
           <Row justify='center'>
-            <Button type='primary' onClick={this.createNewGroup}>
+            <Button
+              type='primary'
+              onClick={this.createNewGroup}
+              disabled={this.state.createNewGroupButton}
+            >
               创建
             </Button>
           </Row>

@@ -35,13 +35,29 @@ class UserInfoEditModal extends React.Component {
   };
   constructor(props) {
     super(props);
+    this.state = {
+      updateButton: false,
+    };
     this.onEdit = this.onEdit.bind(this);
   }
 
   onEdit() {
+    this.setState({
+      updateButton: true,
+    });
     this.formRef.current.validateFields().then((value) => {
       this.props.updataInfo(value.signature, value.username, value.usersex, value.userage);
     });
+    var count = 5;
+    var intervalVerificationCode = setInterval(() => {
+      count -= 1;
+      if (count <= 0) {
+        clearInterval(intervalVerificationCode);
+        this.setState({
+          updateButton: false,
+        });
+      }
+    }, 1000);
   }
   render() {
     return (
@@ -92,7 +108,7 @@ class UserInfoEditModal extends React.Component {
           </Form>{' '}
         </div>
         <Row justify='center'>
-          <Button type='primary' onClick={this.onEdit}>
+          <Button type='primary' onClick={this.onEdit} disabled={this.state.updateButton}>
             修改信息
           </Button>
         </Row>
