@@ -7,7 +7,6 @@
 import React from 'react';
 import { Input, Tabs, Badge, Collapse } from 'antd';
 import PropTypes, { bool } from 'prop-types';
-import { UserOutlined } from '@ant-design/icons';
 import CommonInfoCard from './friendsInfoCard';
 import './index.css';
 import { inject, Observer } from 'mobx-react';

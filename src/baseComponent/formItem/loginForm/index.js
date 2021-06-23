@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Link, Redirect, withRouter } from 'react-router-dom';
+import { Link, withRouter } from 'react-router-dom';
 
 import { Form, Input, Button, Space, Col, Row, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';

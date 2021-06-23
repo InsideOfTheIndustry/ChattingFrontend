@@ -6,8 +6,8 @@
  */
 
 import React from 'react';
-import { Card, Avatar, Row, Col, Input, Space, Button } from 'antd';
-import { UserOutlined, FormOutlined, HomeOutlined, SettingOutlined } from '@ant-design/icons';
+import { Card, Avatar, Row, Col, Button } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 import PropTypes from 'prop-types';
 import './index.css';
 
@@ -40,11 +40,18 @@ class CommonInfoCard extends React.Component {
 
   constructor(props) {
     super(props);
+    this.state = {
+      buttonDisabled: false,
+    };
+
     this.addFriend = this.addFriend.bind(this);
   }
 
   // addFriend 添加好友 根据用户账号
   addFriend() {
+    this.setState({
+      buttonDisabled: true,
+    });
     var token = localStorage.getItem(this.props.account + 'token');
     this.props.sendAddFriendRequest(
       3,
@@ -54,6 +61,16 @@ class CommonInfoCard extends React.Component {
       this.props.friendAccount,
       ''
     );
+    var count = 5;
+    var intervalVerificationCode = setInterval(() => {
+      count -= 1;
+      if (count <= 0) {
+        clearInterval(intervalVerificationCode);
+        this.setState({
+          buttonDisabled: false,
+        });
+      }
+    }, 1000);
   }
 
   render() {
@@ -90,7 +107,13 @@ class CommonInfoCard extends React.Component {
           <Col span={18}>{this.props.useronline === 1 ? '在线' : '离线'}</Col>
         </Row>
         <Row justify='center'>
-          <Button type='primary' onClick={this.addFriend} disabled={this.props.buttonDisabled}>
+          <Button
+            type='primary'
+            onClick={() => {
+              this.addFriend();
+            }}
+            disabled={this.props.buttonDisabled || this.state.buttonDisabled}
+          >
             添加好友
           </Button>
         </Row>

@@ -7,7 +7,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Input, Modal, Divider, notification } from 'antd';
+import { Input, Modal, Divider, notification } from 'antd';
 import { inject, observer } from 'mobx-react';
 import CommonInfoCard from '../../formItem/userinfoForm/index';
 

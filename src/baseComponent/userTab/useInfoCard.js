@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Card, Avatar, Row, Col, Input, Space, Button } from 'antd';
+import { Card, Avatar, Row, Col, Space, Button } from 'antd';
 import {
   UserOutlined,
   FormOutlined,
