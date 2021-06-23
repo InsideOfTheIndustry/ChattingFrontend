@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Modal, Form, Input, Button, Row, Space, Select, InputNumber } from 'antd';
+import { Modal, Form, Input, Button, Row, Select, InputNumber } from 'antd';
 
 import PropTypes from 'prop-types';
 import './index.css';

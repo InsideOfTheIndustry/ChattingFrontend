@@ -6,8 +6,8 @@
  */
 
 import React from 'react';
-import { Card, Avatar, Row, Col, Input, Space, Button } from 'antd';
-import { UserOutlined, FormOutlined, HomeOutlined, SettingOutlined } from '@ant-design/icons';
+import { Card, Avatar, Row, Col, Button } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 import PropTypes from 'prop-types';
 import './index.css';
 

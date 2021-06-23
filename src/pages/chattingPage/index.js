@@ -7,7 +7,7 @@
 
 import { inject, observer } from 'mobx-react';
 import React from 'react';
-import { Layout, message, notification } from 'antd';
+import { Layout, notification } from 'antd';
 import moment from 'moment';
 import UserTab from '../../baseComponent/userTab/userTabMainContent';
 import UserInfoCard from '../../baseComponent/userTab/useInfoCard';

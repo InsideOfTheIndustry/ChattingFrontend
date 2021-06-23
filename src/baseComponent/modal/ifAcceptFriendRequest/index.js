@@ -7,7 +7,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Input, Modal } from 'antd';
+import { Button, Modal } from 'antd';
 
 class AcceptFriendRequestModal extends React.Component {
   static propsTypes = {
