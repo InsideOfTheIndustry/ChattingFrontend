@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Card, Avatar, Row, Col, Space, Button } from 'antd';
+import { Card, Avatar, Row, Col, Space, Button, Popover } from 'antd';
 import {
   UserOutlined,
   FormOutlined,
@@ -69,15 +69,17 @@ class UserInfoCard extends React.Component {
           <Col span={18}>
             <font size={5}>{this.props.username}</font>
             <br></br>
-            {this.props.signature.length !== 0 ? (
-              <font style={{ border: '1px solid black' }}>
-                {this.props.signature.length > 10
-                  ? this.props.signature.substring(0, 10) + '...'
-                  : this.props.signature}
-              </font>
-            ) : (
-              <font style={{ border: '0px solid black' }}>{this.props.signature}</font>
-            )}
+            <Popover placement='right' content={this.props.signature}>
+              {this.props.signature.length !== 0 ? (
+                <font style={{ border: '1px solid black' }}>
+                  {this.props.signature.length > 10
+                    ? this.props.signature.substring(0, 10) + '...'
+                    : this.props.signature}
+                </font>
+              ) : (
+                <font style={{ border: '0px solid black' }}>{this.props.signature}</font>
+              )}
+            </Popover>
           </Col>
         </Row>
         <Row></Row>

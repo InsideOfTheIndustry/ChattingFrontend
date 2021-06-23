@@ -29,6 +29,8 @@ class RegisterForm extends React.Component {
     super(props);
     this.state = {
       buttonName: '获取验证码',
+      verifyCode: false,
+      registerButton: false,
     };
 
     this.sendVerificationcode = this.sendVerificationcode.bind(this);
@@ -41,6 +43,9 @@ class RegisterForm extends React.Component {
     this.formRef.current
       .validateFields()
       .then((value) => {
+        this.setState({
+          registerButton: true,
+        });
         this.props.register(
           value.username,
           value.useremail,
@@ -49,6 +54,17 @@ class RegisterForm extends React.Component {
           value.verificationcode,
           value.userpassword
         );
+
+        var count = 5;
+        var intervalVerificationCode = setInterval(() => {
+          count -= 1;
+          if (count <= 0) {
+            clearInterval(intervalVerificationCode);
+            this.setState({
+              registerButton: false,
+            });
+          }
+        }, 1000);
       })
       .catch((info) => {
         message.error({
@@ -64,6 +80,9 @@ class RegisterForm extends React.Component {
     this.formRef.current
       .validateFields(['useremail'])
       .then((value) => {
+        this.setState({
+          verifyCodeButton: true,
+        });
         this.props.sendVerificationcode(value.useremail);
         var count = 60;
         var intervalVerificationCode = setInterval(() => {
@@ -75,6 +94,7 @@ class RegisterForm extends React.Component {
             clearInterval(intervalVerificationCode);
             this.setState({
               buttonName: '发送验证码',
+              verifyCodeButton: false,
             });
           }
         }, 1000);
@@ -154,14 +174,18 @@ class RegisterForm extends React.Component {
           >
             <Space>
               <Input style={{ width: 220 }} />
-              <Button type={'primary'} onClick={this.sendVerificationcode}>
+              <Button
+                type={'primary'}
+                onClick={this.sendVerificationcode}
+                disabled={this.state.verifyCodeButton}
+              >
                 {this.state.buttonName}
               </Button>
             </Space>
           </Form.Item>
         </Form>
         <Row justify='center'>
-          <Button type='primary' onClick={this.register}>
+          <Button type='primary' onClick={this.register} disabled={this.state.registerButton}>
             注册
           </Button>
         </Row>
