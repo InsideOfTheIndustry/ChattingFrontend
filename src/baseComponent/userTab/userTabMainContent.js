@@ -155,10 +155,13 @@ class UserTab extends React.Component {
                 </Panel>
                 <Panel header='群聊列表' key='grouplist'>
                   {this.props.groupinfo.map((item) => {
+                    var nowtime = new Date();
+                    var timeint = nowtime.getTime();
+
                     return (
                       <CommonInfoCard
                         width={'266px'}
-                        avatarUrl={'item.Avatar'}
+                        avatarUrl={item.GroupAvatar + '?' + String(timeint)}
                         commonName={item.GroupName}
                         signature={item.GroupIntro}
                         openNewChattingModal={this.props.openNewChattingModal}

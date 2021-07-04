@@ -18,6 +18,7 @@ import AcceptFriendRequestModal from '../../baseComponent/modal/ifAcceptFriendRe
 import ChangeAvatarModal from '../../baseComponent/modal/changeUserinfoModel/useravatar';
 import UserInfoEditModal from '../../baseComponent/modal/changeUserinfoModel/userinfo';
 import CreateNewGroupModal from '../../baseComponent/modal/newGroupModal/index';
+import ContentPageRouter from '../contentPage/contentPageInit';
 
 import './index.css';
 
@@ -87,18 +88,20 @@ class ChattingPage extends React.Component {
     this.sendGroupCreateVerificationcode = this.sendGroupCreateVerificationcode.bind(this);
     this.createNewGroup = this.createNewGroup.bind(this);
     this.onCloseCreateNewGroupModal = this.onCloseCreateNewGroupModal.bind(this);
+    this.onExit = this.onExit.bind(this);
   }
 
   async componentDidMount() {
-    var account = this.props.match.params.account;
+    var account = this.userStore.userlogininfo.useraccount;
+    if (typeof account === 'undefined') {
+      this.props.history.push('/');
+    }
     var response = await this.userStore.GetUserInfo(
       localStorage.getItem(String(account) + 'token'),
       account,
       account
     );
-    if (typeof response === 'undefined') {
-      this.props.history.push('/');
-    }
+
     var nowtime = new Date();
     var timeint = nowtime.getTime();
     response.Avatar = response.Avatar + '?' + String(timeint);
@@ -137,7 +140,7 @@ class ChattingPage extends React.Component {
     websocket.onmessage = this.onReceiveMessageFromWebServer;
 
     this.setState({ websocketClient: websocket });
-    setInterval(() => {
+    var heartbeat = setInterval(() => {
       websocket.send(
         '{"messagetype": 0, "token": "' +
           localStorage.getItem(String(account) + 'token') +
@@ -148,6 +151,9 @@ class ChattingPage extends React.Component {
           '"}'
       );
     }, 10000);
+    websocket.onclose = () => {
+      clearInterval(heartbeat);
+    };
   }
 
   // 接收消息的回调函数
@@ -165,7 +171,7 @@ class ChattingPage extends React.Component {
     var messageWithoutSpace = message.data.replace('', '');
 
     var replyMessage = JSON.parse(messageWithoutSpace);
-    console.log(replyMessage.messagetype);
+    // console.log(replyMessage.messagetype);
     switch (replyMessage.messagetype) {
       case 2:
         // 2 代表聊天信息
@@ -222,12 +228,11 @@ class ChattingPage extends React.Component {
         break;
       case 22:
         // 22 代表群聊信息
-        console.log(replyMessage);
+        // console.log(replyMessage);
         var ifExist = this.state.messageInTheChattingModal['group' + replyMessage.groupid];
         // 对话出现在对话框内时 同时也要添加进消息列表
         if (typeof ifExist !== 'undefined') {
           var messageInTheChattingModal = this.state.messageInTheChattingModal;
-          // 对话框内添加 因为是引用了messageOfAllChatting的记录 因此不需要在这里添加
 
           // 消息列表内添加
           if (this.state.chattingModalVisible === true) {
@@ -278,7 +283,6 @@ class ChattingPage extends React.Component {
         // 200 表示消息发送成功
 
         var messageInTheChattingModal = this.state.messageInTheChattingModal;
-
         messageInTheChattingModal[replyMessage.sender].chattingRecord.push({
           message: replyMessage.message,
           userName: messageInTheChattingModal[replyMessage.sender].friendName,
@@ -295,7 +299,7 @@ class ChattingPage extends React.Component {
         // 404 表示信息发送失败
 
         var messageInTheChattingModal = this.state.messageInTheChattingModal;
-        console.log(replyMessage);
+        // console.log(replyMessage);
 
         messageInTheChattingModal[replyMessage.sender].chattingRecord.push({
           message: replyMessage.message,
@@ -315,6 +319,7 @@ class ChattingPage extends React.Component {
 
         break;
       case 220:
+        // 群聊发送成功
         var messageInTheChattingModal = this.state.messageInTheChattingModal;
 
         messageInTheChattingModal['group' + replyMessage.groupid].chattingRecord.push({
@@ -442,27 +447,34 @@ class ChattingPage extends React.Component {
           message: message,
           time: time,
           sendSuccess: true,
-          userName: messageOfAllChatting[sender].friendName,
+          userName:
+            this.userStore.friendsforsearch[sender].UserName === undefined
+              ? '未知用户'
+              : this.userStore.friendsforsearch[sender].UserName,
+          avatar:
+            this.userStore.friendsforsearch[sender].Avatar === undefined
+              ? ''
+              : this.userStore.friendsforsearch[sender].Avatar,
         });
       } else {
-        // 从好友列表中查找 以及判断是否是好友
-        var friendInfo = await this.userStore.GetUserInfo(
-          localStorage.getItem(String(this.state.account) + 'token'),
-          this.state.account,
-          sender
-        );
         messageOfAllChatting[sender] = {
-          friendName: friendInfo.UserName,
+          friendName: this.userStore.friendsforsearch[sender].UserName,
           friendAccount: sender,
           closable: true,
-          avatarUrl: friendInfo.Avatar,
+          avatarUrl: this.userStore.friendsforsearch[sender].Avatar,
           chattingRecord: [
             {
-              userName: friendInfo.UserName,
+              userName:
+                this.userStore.friendsforsearch[sender].UserName === undefined
+                  ? '未知用户'
+                  : this.userStore.friendsforsearch[sender].UserName,
+              avatar:
+                this.userStore.friendsforsearch[sender].Avatar === undefined
+                  ? ''
+                  : this.userStore.friendsforsearch[sender].Avatar,
               userAccount: sender,
               message: message,
               time: time,
-              avatar: friendInfo.Avatar,
             },
           ],
           ifHaveNewMessage: true,
@@ -480,47 +492,59 @@ class ChattingPage extends React.Component {
       } else {
         messageOfAllChatting['group' + groupid].unReadMessageCount = 0;
       }
-      // TODO: 将维护一个群员信息表 到时候只需要查一次就行
-      // 从好友列表中查找 以及判断是否是好友
-      var friendInfo = await this.userStore.GetUserInfo(
-        localStorage.getItem(String(this.state.account) + 'token'),
-        this.state.account,
-        sender
-      );
+
       messageOfAllChatting['group' + groupid].chattingRecord.push({
         userAccount: sender,
-        userName: friendInfo.UserName,
-        avatar: friendInfo.Avatar,
+        userName:
+          this.groupStore.groupWithMember[groupid] === undefined
+            ? '未知用户'
+            : this.groupStore.groupWithMember[groupid][sender].UserName,
+        avatar:
+          this.groupStore.groupWithMember[groupid] === undefined
+            ? '未知用户'
+            : this.groupStore.groupWithMember[groupid][sender].Avatar,
         message: message,
         time: time,
         sendSuccess: true,
       });
     } else {
-      // TODO: 将维护一个群员信息表 到时候只需要查一次就行
-      // 从好友列表中查找 以及判断是否是好友
-      var friendInfo = await this.userStore.GetUserInfo(
-        localStorage.getItem(String(this.state.account) + 'token'),
-        this.state.account,
-        sender
-      );
-      var groupname = '';
-      for (var i = 0; i < this.userStore.usergroup.length; i++) {
-        if (this.userStore.usergroup[i].Groupid === groupid) {
-          groupname = this.userStore.usergroup[i].GroupName;
+      // 查询群成员 维护一个群成员列表
+      await this.groupStore.QueryGroupMemberInfo(groupid);
+      // 查询群信息
+      var groupinfo = await this.groupStore.QueryGroupInfo(groupid);
+      if (typeof groupinfo === 'undefined') {
+        notification.error({
+          message: 'Notification',
+          description: '查询群信息失败!',
+        });
+        var groupname = '';
+        for (var i = 0; i < this.userStore.usergroup.length; i++) {
+          if (this.userStore.usergroup[i].Groupid === groupid) {
+            groupname = this.userStore.usergroup[i].GroupName;
+          }
         }
+        groupinfo = { GroupAvatar: '', GroupName: groupname };
       }
+
       messageOfAllChatting['group' + groupid] = {
-        friendName: groupname,
+        friendName: groupinfo.GroupName,
         friendAccount: 'group' + groupid,
         closable: true,
-        avatarUrl: friendInfo.Avatar,
+        avatarUrl: groupinfo.GroupAvatar,
         chattingRecord: [
           {
-            userName: friendInfo.UserName,
+            userName:
+              this.groupStore.groupWithMember[groupid] === undefined
+                ? '未知用户'
+                : this.groupStore.groupWithMember[groupid][sender].UserName,
             userAccount: sender,
             message: message,
             time: time,
-            avatar: friendInfo.Avatar,
+            avatar:
+              this.groupStore.groupWithMember[groupid] === undefined
+                ? '未知用户'
+                : this.groupStore.groupWithMember[groupid][sender].Avatar,
+            sendSuccess: true,
           },
         ],
         ifHaveNewMessage: true,
@@ -539,7 +563,7 @@ class ChattingPage extends React.Component {
 
   // 打开发送信息对话框
   // TODO:重点看这里 这里公用了底层数组
-  onOpenChattingModal(friendAccount, friendName, friendavatarUrl, chattingRecord) {
+  async onOpenChattingModal(friendAccount, friendName, friendavatarUrl, chattingRecord) {
     var messageInTheChattingModal = this.state.messageInTheChattingModal;
     var messageOfAllChatting = this.state.messageOfAllChatting;
 
@@ -560,24 +584,64 @@ class ChattingPage extends React.Component {
           unReadMessageCount: 0,
         };
       } else {
-        messageOfAllChatting[friendAccount] = {
-          friendName: friendName,
-          friendAccount: friendAccount,
-          closable: true,
-          avatarUrl: friendavatarUrl,
-          chattingRecord: chattingRecord,
-          ifHaveNewMessage: false,
-          unReadMessageCount: 0,
-        };
-        messageInTheChattingModal[friendAccount] = {
-          friendName: friendName,
-          friendAccount: friendAccount,
-          closable: true,
-          avatarUrl: friendavatarUrl,
-          chattingRecord: messageOfAllChatting[friendAccount].chattingRecord,
-          ifHaveNewMessage: false,
-          unReadMessageCount: 0,
-        };
+        var index = friendAccount.substring(0, 5);
+        if (index === 'group') {
+          var groupid = friendAccount.substring(5);
+          // 查询群成员 维护一个群成员列表
+          await this.groupStore.QueryGroupMemberInfo(groupid);
+          // 查询群信息
+          var groupinfo = await this.groupStore.QueryGroupInfo(groupid);
+          if (typeof groupinfo === 'undefined') {
+            notification.error({
+              message: 'Notification',
+              description: '查询群信息失败!',
+            });
+            var groupname = '';
+            for (var i = 0; i < this.userStore.usergroup.length; i++) {
+              if (this.userStore.usergroup[i].Groupid === groupid) {
+                groupname = this.userStore.usergroup[i].GroupName;
+              }
+            }
+            groupinfo = { GroupAvatar: '', GroupName: groupname };
+          }
+          messageOfAllChatting[friendAccount] = {
+            friendName: this.userStore.usergroupforsearch[groupid].GroupName,
+            friendAccount: friendAccount,
+            closable: true,
+            avatarUrl: groupinfo.GroupAvatar,
+            chattingRecord: chattingRecord,
+            ifHaveNewMessage: true,
+            unReadMessageCount: 1,
+          };
+          messageInTheChattingModal[friendAccount] = {
+            friendName: friendName,
+            friendAccount: friendAccount,
+            closable: true,
+            avatarUrl: friendavatarUrl,
+            chattingRecord: messageOfAllChatting[friendAccount].chattingRecord,
+            ifHaveNewMessage: false,
+            unReadMessageCount: 0,
+          };
+        } else {
+          messageOfAllChatting[friendAccount] = {
+            friendName: friendName,
+            friendAccount: friendAccount,
+            closable: true,
+            avatarUrl: friendavatarUrl,
+            chattingRecord: chattingRecord,
+            ifHaveNewMessage: false,
+            unReadMessageCount: 0,
+          };
+          messageInTheChattingModal[friendAccount] = {
+            friendName: friendName,
+            friendAccount: friendAccount,
+            closable: true,
+            avatarUrl: friendavatarUrl,
+            chattingRecord: messageOfAllChatting[friendAccount].chattingRecord,
+            ifHaveNewMessage: false,
+            unReadMessageCount: 0,
+          };
+        }
       }
     }
     messageOfAllChatting[friendAccount].ifHaveNewMessage = false;
@@ -723,21 +787,6 @@ class ChattingPage extends React.Component {
         nowTime +
         '"}'
     );
-    console.log(
-      '{"messagetype":' +
-        messageType +
-        ', "token": "' +
-        token +
-        '", "message": "' +
-        sendMessage +
-        '", "sender":"' +
-        userAccount +
-        '", "receiver":"' +
-        friendAccount +
-        '","groupid":"' +
-        groupid,
-      '","time":"' + nowTime + '"}'
-    );
   }
 
   // 打开改变头像对话框
@@ -879,6 +928,21 @@ class ChattingPage extends React.Component {
     });
   }
 
+  // 退出登录
+  onExit() {
+    this.state.websocketClient.send(
+      '{"messagetype": 4, "token": "' +
+        this.userStore.userlogininfo.token +
+        '", "message": "", "sender":"' +
+        this.userStore.userlogininfo.useraccount +
+        '", "receiver":"","groupid":"","time":"' +
+        moment().format('YYYY-MM-DDTHH:mm:ssZ') +
+        '"}'
+    );
+    this.state.websocketClient.close();
+    this.userStore.userlogininfo = {};
+  }
+
   render() {
     const { userInfo } = this.state;
     return (
@@ -891,6 +955,7 @@ class ChattingPage extends React.Component {
             avatarUrl={userInfo.Avatar}
             username={userInfo.UserName}
             signature={userInfo.Signature}
+            onExit={this.onExit}
           ></UserInfoCard>
           <UserTab
             openNewChattingModal={this.onOpenChattingModal}
@@ -907,7 +972,9 @@ class ChattingPage extends React.Component {
           ></UserTabFoot>
         </Sider>
         <Layout>
-          <Content>Content</Content>
+          <Content>
+            <ContentPageRouter></ContentPageRouter>
+          </Content>
         </Layout>
         <ChattingModal
           messageInTheChattingModal={this.state.messageInTheChattingModal}

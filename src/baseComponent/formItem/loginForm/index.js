@@ -8,7 +8,7 @@
 import React from 'react';
 import { Link, withRouter } from 'react-router-dom';
 
-import { Form, Input, Button, Space, Col, Row, message } from 'antd';
+import { Form, Input, Button, Space, Col, Row, message, Modal } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import './index.css';
 import { inject, Observer } from 'mobx-react';
@@ -26,6 +26,7 @@ class LoginForm extends React.Component {
     this.state = {
       isLogin: false,
       account: '',
+      successvisible: false,
     };
 
     this.userLoginStore = this.props.userLoginStore;
@@ -42,7 +43,17 @@ class LoginForm extends React.Component {
       }
 
       message.success('登录成功!');
-      this.props.history.push({ pathname: '/Chatting/' + value.account });
+      this.setState({
+        successvisible: true,
+      });
+      // this.props.history.push({ pathname: '/Chatting/' + value.account });
+    });
+  }
+
+  // 登录成功后的点击框
+  onSuccessLoginComfirm() {
+    this.setState({
+      successvisible: false,
     });
   }
 
@@ -71,6 +82,17 @@ class LoginForm extends React.Component {
             <Link to='/Register'>注册</Link>
           </Button>
         </Space>
+        <Modal
+          title='登录成功！'
+          visible={this.state.successvisible}
+          onCancel={this.onSuccessLoginComfirm}
+          footer={null}
+        >
+          <p>欢迎进入web chatting~</p>
+          <Button type='primary' onClick={this.onSuccessLoginComfirm}>
+            <Link to='/Chatting'>确认进入</Link>
+          </Button>
+        </Modal>
       </div>
     );
   }

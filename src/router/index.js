@@ -25,3 +25,10 @@ global.Chatting = Loadable({
   loader: () => import('../pages/chattingPage/index.js'),
   loading: Loading,
 });
+
+// 主页内容
+global.ContentHome = Loadable({
+  loader: () => import('../pages/contentPage/contenthome.js'),
+
+  loading: Loading,
+});
