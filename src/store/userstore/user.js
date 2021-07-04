@@ -29,11 +29,20 @@ class UserLoginStore {
   @observable
   friends = []; // 好友列表
 
+  @observable // 方便搜索
+  friendsforsearch = {};
+
   @observable
   userInfo = {}; // 用户信息
 
   @observable
+  userlogininfo = {}; // token 、useraccount 信息
+
+  @observable
   usergroup = []; // 用户群聊列表
+
+  @observable
+  usergroupforsearch = {};
 
   @action // 用户登录
   async UserLogin(useraccount, password) {
@@ -43,6 +52,10 @@ class UserLoginStore {
     }
     this.token = response.token;
     localStorage.setItem(String(useraccount) + 'token', response.token);
+    this.userlogininfo = {
+      useraccount: useraccount,
+      token: response.token,
+    };
     return response;
   }
 
@@ -51,8 +64,12 @@ class UserLoginStore {
     var friendslist = await GetUserFriendInfo(token, useraccount);
     if (friendslist === null || friendslist === undefined) {
       this.friends = [];
+      this.friendsforsearch = {};
     } else {
       this.friends = friendslist;
+      for (var i = 0; i < friendslist.length; i++) {
+        this.friendsforsearch[friendslist[i].UserAccount] = friendslist[i];
+      }
     }
   }
 
@@ -98,6 +115,10 @@ class UserLoginStore {
       this.usergroup = [];
     } else {
       this.usergroup = grouplist;
+      for (var i = 0; i < grouplist.length; i++) {
+        this.usergroupforsearch[grouplist[i].Groupid] = grouplist[i];
+        console.log(this.usergroupforsearch);
+      }
     }
   }
 }

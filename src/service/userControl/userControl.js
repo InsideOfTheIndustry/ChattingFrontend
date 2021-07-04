@@ -133,16 +133,12 @@ export async function GetUserInfo(token, useraccount, searchUser) {
 
 // GetUserFriendInfo 获取用户好友信息
 export async function GetUserFriendInfo(token, useraccount) {
-  var useraccountint = parseInt(useraccount);
   var response = await axios({
-    url: '/user/userfriend',
-    method: 'post',
+    url: '/user/userfriend/' + String(useraccount),
+    method: 'get',
     headers: {
       token: token,
       account: String(useraccount),
-    },
-    data: {
-      useraccount: useraccountint,
     },
   }).catch(function (error) {
     if (error.response) {
@@ -169,16 +165,12 @@ export async function GetUserFriendInfo(token, useraccount) {
 
 // GetUserGroupInfo 获取用户群聊信息
 export async function GetUserGroupInfo(token, useraccount) {
-  var useraccountint = parseInt(useraccount);
   var response = await axios({
-    url: '/user/usergroup',
-    method: 'post',
+    url: '/user/usergroup/' + String(useraccount),
+    method: 'get',
     headers: {
       token: token,
       account: String(useraccount),
-    },
-    data: {
-      useraccount: useraccountint,
     },
   }).catch(function (error) {
     if (error.response) {

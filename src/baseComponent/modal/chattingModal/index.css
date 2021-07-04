@@ -44,3 +44,53 @@
   max-width: 200px;
   height: 20px;
 }
+
+
+.chattinggrouparea {
+  display: inline-table;
+}
+
+.chattinggroupchattingarea {
+  display: inline-block;
+  height: 30vh;
+  min-height: 300px;
+  overflow: auto;
+  width: 400px;
+}
+
+.chattinggroupshowmember{
+  display: inline-block;
+  height: 30vh;
+  min-height: 300px;
+  overflow: auto;
+  width: 70px;
+}
+
+.groupmembershowstyle {
+  width: 60px;
+  text-align: center;
+}
+
+.usernamefont{
+  font-family:'黑体, 宋体(GB)';
+  font-size: larger;
+  font-weight: bold;
+}
+
+.useraccountfont {
+  font-family: '黑体, 宋体(GB)';
+  font-size: small;
+  font-weight:lighter;
+  font-style: normal;
+  color: rgb(102, 98, 98);
+}
+
+.changeAvatarBody {
+  width: 472px;
+  text-align: center;
+}
+
+.changeuserinfobody {
+  width: 472px;
+  text-align: center;
+}

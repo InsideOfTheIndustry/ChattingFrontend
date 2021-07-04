@@ -92,7 +92,7 @@ class AddFriendModal extends React.Component {
 
   render() {
     const { userinfo, buttonDisabled } = this.state;
-    console.log(userinfo);
+    // console.log(userinfo);
 
     return (
       <Modal

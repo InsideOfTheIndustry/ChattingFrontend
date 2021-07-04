@@ -8,13 +8,18 @@
 import React from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
-import { Modal, Tabs, Divider, Input, Button, Space, Row, message } from 'antd';
+import { Modal, Tabs, Divider, Input, Button, Space, Row, message, Drawer } from 'antd';
+import { DashOutlined } from '@ant-design/icons';
 import ChattingPop from './chattingPop';
+import GroupInfoOnTheSide from './groupinfo';
+import { inject, observer } from 'mobx-react';
 import './index.css';
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
 
+@inject('userLoginStore')
+@observer
 class ChattingModal extends React.Component {
   static propsTypes = {
     handleOnCancel: PropTypes.func,
@@ -49,13 +54,19 @@ class ChattingModal extends React.Component {
     this.state = {
       textAreaMessage: '',
       activeTabKey: '',
+      drawerVisible: false,
+      drawVisibility: 'hidden',
     };
+    this.userStore = this.props.userLoginStore;
+
     this.handleOnCancel = this.handleOnCancel.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
     this.renderScrollBar = this.renderScrollBar.bind(this);
     this.onChangeTab = this.onChangeTab.bind(this);
     this.onEdit = this.onEdit.bind(this);
     this.textAreaChange = this.textAreaChange.bind(this);
+    this.openDrawer = this.openDrawer.bind(this);
+    this.onDrawerClose = this.onDrawerClose.bind(this);
   }
   componentDidMount() {
     this.renderScrollBar();
@@ -167,83 +178,166 @@ class ChattingModal extends React.Component {
     });
   }
 
+  // 打开侧边栏 用户查看群情况 及用户情况
+  openDrawer() {
+    if (this.state.drawVisibility === 'visible') {
+      this.setState({
+        drawerVisible: false,
+        drawVisibility: 'hidden',
+      });
+      return;
+    }
+    this.setState({
+      drawerVisible: true,
+      drawVisibility: 'visible',
+    });
+  }
+
+  // 关闭侧边栏
+  onDrawerClose() {
+    this.setState({
+      drawerVisible: false,
+      drawVisibility: 'hidden',
+    });
+  }
+
   render() {
     var messageInTheChattingModal = [];
     for (let key in this.props.messageInTheChattingModal) {
       messageInTheChattingModal.push(this.props.messageInTheChattingModal[key]);
     }
+    // console.log(this.props.nowChattingFriend);
 
     return (
-      <Modal visible={this.props.visible} onCancel={this.handleOnCancel} footer={null}>
-        <Tabs
-          hideAdd
-          type='editable-card'
-          onEdit={this.onEdit}
-          activeKey={this.props.nowChattingFriend}
-          onChange={this.onChangeTab}
-        >
-          {messageInTheChattingModal.map((pane) => {
-            return (
-              <TabPane
-                tab={pane.friendName + '(' + pane.friendAccount + ')'}
-                key={pane.friendAccount}
-                closable={pane.closable}
-              >
-                <div className={'chattingarea'} id={pane.friendAccount + 'chattingposition'}>
-                  {pane.chattingRecord.map((Record) => {
-                    return (
-                      <ChattingPop
-                        userName={Record.userName}
-                        userAccount={Record.userAccount}
-                        message={Record.message}
-                        ifFriend={Record.userAccount !== this.props.userAccount}
-                        useravatar={this.props.avatarUrl}
-                        friendavatar={Record.avatar}
-                        sendSuccess={Record.sendSuccess}
-                      ></ChattingPop>
-                    );
-                  })}
-                </div>
-                <Divider style={{ borderWidth: 2, borderColor: '#7cb305' }} />
-                <div className={'inputarea'}>
-                  <TextArea
-                    style={{ height: 100 }}
-                    bordered={false}
-                    autoSize={{ minRows: 5, maxRows: 5 }}
-                    id={pane.friendAccount + 'message'}
-                    placeholder='请输入消息'
-                    maxLength={100}
-                    onChange={this.textAreaChange}
-                    onPressEnter={(e) => {
-                      e.preventDefault();
-                      this.sendMessage(pane.friendAccount);
-                    }}
-                    value={this.state.textAreaMessage}
-                  ></TextArea>
-                  <div>
-                    <Row justify={'end'}>
-                      <Space>
-                        <Button type='primary' size={'middle'} onClick={this.handleOnCancel} danger>
-                          取消
-                        </Button>
-                        <Button
-                          type='primary'
-                          size={'middle'}
-                          onClick={() => {
-                            this.sendMessage(pane.friendAccount);
-                          }}
-                        >
-                          发送
-                        </Button>
-                      </Space>
-                    </Row>
+      <div>
+        <Modal visible={this.props.visible} onCancel={this.handleOnCancel} footer={null}>
+          <Tabs
+            hideAdd
+            type='editable-card'
+            onEdit={this.onEdit}
+            activeKey={this.props.nowChattingFriend}
+            onChange={this.onChangeTab}
+          >
+            {messageInTheChattingModal.map((pane) => {
+              return (
+                <TabPane
+                  tab={
+                    pane.friendAccount.slice(0, 5) === 'group'
+                      ? this.userStore.usergroupforsearch[parseInt(pane.friendAccount.substring(5))]
+                          .GroupName +
+                        '(' +
+                        pane.friendAccount +
+                        ')'
+                      : pane.friendName + '(' + pane.friendAccount + ')'
+                  }
+                  key={pane.friendAccount}
+                  closable={pane.closable}
+                >
+                  {
+                    /* 侧边栏 类似微信 */
+                    pane.friendAccount.slice(0, 5) === 'group' ? (
+                      <div>
+                        <div style={{ visibility: this.state.drawVisibility }}>
+                          <Drawer
+                            title={
+                              this.userStore.usergroupforsearch[
+                                parseInt(pane.friendAccount.substring(5))
+                              ].GroupName
+                            }
+                            zIndex={this.state.zIndex}
+                            placement='right'
+                            closable={true}
+                            onClose={this.onDrawerClose}
+                            visible={false}
+                            getContainer={false}
+                            style={{ position: 'absolute' }}
+                          >
+                            <div>
+                              <GroupInfoOnTheSide
+                                groupId={this.props.nowChattingFriend.substring(5)}
+                                websocketclient={this.props.websocketclient}
+                                userAccount={this.props.userAccount}
+                              ></GroupInfoOnTheSide>
+                            </div>
+                          </Drawer>
+                        </div>
+                        <Row justify={'end'}>
+                          <Button
+                            onClick={() => {
+                              this.openDrawer();
+                            }}
+                            type='link'
+                            icon={<DashOutlined />}
+                          ></Button>
+                        </Row>
+                      </div>
+                    ) : (
+                      ''
+                    )
+                  }
+
+                  <div className={'chattingarea'} id={pane.friendAccount + 'chattingposition'}>
+                    {pane.chattingRecord.map((Record) => {
+                      return (
+                        <ChattingPop
+                          userName={Record.userName}
+                          userAccount={Record.userAccount}
+                          message={Record.message}
+                          ifFriend={Record.userAccount !== this.props.userAccount}
+                          useravatar={this.props.avatarUrl}
+                          friendavatar={Record.avatar}
+                          sendSuccess={Record.sendSuccess}
+                        ></ChattingPop>
+                      );
+                    })}
                   </div>
-                </div>
-              </TabPane>
-            );
-          })}
-        </Tabs>
-      </Modal>
+
+                  <Divider style={{ borderWidth: 2, borderColor: '#7cb305' }} />
+                  <div className={'inputarea'}>
+                    <TextArea
+                      style={{ height: 100 }}
+                      bordered={false}
+                      autoSize={{ minRows: 5, maxRows: 5 }}
+                      id={pane.friendAccount + 'message'}
+                      placeholder='请输入消息'
+                      maxLength={100}
+                      onChange={this.textAreaChange}
+                      onPressEnter={(e) => {
+                        e.preventDefault();
+                        this.sendMessage(pane.friendAccount);
+                      }}
+                      value={this.state.textAreaMessage}
+                    ></TextArea>
+                    <div>
+                      <Row justify={'end'}>
+                        <Space>
+                          <Button
+                            type='primary'
+                            size={'middle'}
+                            onClick={this.handleOnCancel}
+                            danger
+                          >
+                            取消
+                          </Button>
+                          <Button
+                            type='primary'
+                            size={'middle'}
+                            onClick={() => {
+                              this.sendMessage(pane.friendAccount);
+                            }}
+                          >
+                            发送
+                          </Button>
+                        </Space>
+                      </Row>
+                    </div>
+                  </div>
+                </TabPane>
+              );
+            })}
+          </Tabs>
+        </Modal>
+      </div>
     );
   }
 }

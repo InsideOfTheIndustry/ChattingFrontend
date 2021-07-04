@@ -15,7 +15,7 @@ class FullPageLayout extends React.Component {
         <Switch>
           <Route exact path='/' component={global.Login} />
           <Route exact path='/Register' component={global.Register} />
-          <Route path='/Chatting/:account' component={global.Chatting} />
+          <Route path='/Chatting' component={global.Chatting} />
         </Switch>
       </div>
     );
