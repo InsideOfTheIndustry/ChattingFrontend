@@ -6,7 +6,8 @@
  */
 
 import React from 'react';
-import { Card, Avatar, Row, Col, Space, Button, Popover } from 'antd';
+import { Card, Avatar, Row, Col, Space, Button, Popover, Dropdown, Menu } from 'antd';
+import { Link } from 'react-router-dom';
 import {
   UserOutlined,
   FormOutlined,
@@ -25,6 +26,7 @@ class UserInfoCard extends React.Component {
     usersex: PropTypes.number,
     onOpenChangeAvatar: PropTypes.func,
     onOpenEditUserinfoModal: PropTypes.func,
+    onExit: PropTypes.func,
   };
 
   static defaultProps = {
@@ -34,12 +36,14 @@ class UserInfoCard extends React.Component {
     usersex: 1,
     onOpenChangeAvatar() {},
     onOpenEditUserinfoModal() {},
+    onExit() {},
   };
 
   constructor(props) {
     super(props);
 
     this.changeAvatar = this.changeAvatar.bind(this);
+    this.onExit = this.onExit.bind(this);
   }
 
   // 改变头像
@@ -47,49 +51,74 @@ class UserInfoCard extends React.Component {
     this.props.onOpenChangeAvatar();
   }
 
+  // 退出登录
+  onExit() {
+    this.props.onExit();
+  }
+
   render() {
     return (
-      <Card style={{ height: 200, background: '#afdfe4' }}>
-        <Row justify={'end'}>
-          <Button
-            icon={<FormOutlined />}
-            type={'link'}
-            onClick={this.props.onOpenEditUserinfoModal}
-          >
-            修改资料
-          </Button>
-          <Button icon={<MenuOutlined />} type={'link'}></Button>
-        </Row>
-        <Row>
-          <Col span={6}>
-            <div className={'friendinfoavatar'} onClick={this.changeAvatar}>
-              <Avatar size={60} icon={<UserOutlined />} src={this.props.avatarUrl} />
-            </div>
-          </Col>
-          <Col span={18}>
-            <font size={5}>{this.props.username}</font>
-            <br></br>
-            <Popover placement='right' content={this.props.signature}>
-              {this.props.signature.length !== 0 ? (
-                <font style={{ border: '1px solid black' }}>
-                  {this.props.signature.length > 10
-                    ? this.props.signature.substring(0, 10) + '...'
-                    : this.props.signature}
-                </font>
-              ) : (
-                <font style={{ border: '0px solid black' }}>{this.props.signature}</font>
-              )}
-            </Popover>
-          </Col>
-        </Row>
-        <Row></Row>
-        <Row justify={'end'}>
-          <Space>
-            <SettingOutlined />
-            <HomeOutlined />
-          </Space>
-        </Row>
-      </Card>
+      <div>
+        <Card style={{ height: 200, background: '#afdfe4' }}>
+          <Row justify={'end'}>
+            <Dropdown
+              overlay={
+                <Menu>
+                  <Menu.Item>
+                    <Button
+                      icon={<FormOutlined />}
+                      type={'link'}
+                      onClick={this.props.onOpenEditUserinfoModal}
+                    >
+                      修改资料
+                    </Button>
+                  </Menu.Item>
+                  <Menu.Item>
+                    <Link to='/'>
+                      <Button icon={<FormOutlined />} type={'link'} onClick={this.onExit}>
+                        退出登录
+                      </Button>
+                    </Link>
+                  </Menu.Item>
+                </Menu>
+              }
+              placement='bottomLeft'
+              trigger={['click']}
+            >
+              <Button icon={<MenuOutlined />} type={'link'}></Button>
+            </Dropdown>
+          </Row>
+          <Row>
+            <Col span={6}>
+              <div className={'friendinfoavatar'} onClick={this.changeAvatar}>
+                <Avatar size={60} icon={<UserOutlined />} src={this.props.avatarUrl} />
+              </div>
+            </Col>
+            <Col span={18}>
+              <font size={5}>{this.props.username}</font>
+              <br></br>
+              <Popover placement='right' content={this.props.signature}>
+                {this.props.signature.length !== 0 ? (
+                  <font style={{ border: '1px solid black' }}>
+                    {this.props.signature.length > 10
+                      ? this.props.signature.substring(0, 10) + '...'
+                      : this.props.signature}
+                  </font>
+                ) : (
+                  <font style={{ border: '0px solid black' }}>{this.props.signature}</font>
+                )}
+              </Popover>
+            </Col>
+          </Row>
+          <Row></Row>
+          <Row justify={'end'}>
+            <Space>
+              <SettingOutlined />
+              <HomeOutlined />
+            </Space>
+          </Row>
+        </Card>
+      </div>
     );
   }
 }

@@ -117,7 +117,6 @@ class UserLoginStore {
       this.usergroup = grouplist;
       for (var i = 0; i < grouplist.length; i++) {
         this.usergroupforsearch[grouplist[i].Groupid] = grouplist[i];
-        console.log(this.usergroupforsearch);
       }
     }
   }

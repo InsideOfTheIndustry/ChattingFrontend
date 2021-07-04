@@ -88,18 +88,20 @@ class ChattingPage extends React.Component {
     this.sendGroupCreateVerificationcode = this.sendGroupCreateVerificationcode.bind(this);
     this.createNewGroup = this.createNewGroup.bind(this);
     this.onCloseCreateNewGroupModal = this.onCloseCreateNewGroupModal.bind(this);
+    this.onExit = this.onExit.bind(this);
   }
 
   async componentDidMount() {
     var account = this.userStore.userlogininfo.useraccount;
+    if (typeof account === 'undefined') {
+      this.props.history.push('/');
+    }
     var response = await this.userStore.GetUserInfo(
       localStorage.getItem(String(account) + 'token'),
       account,
       account
     );
-    if (typeof response === 'undefined') {
-      this.props.history.push('/');
-    }
+
     var nowtime = new Date();
     var timeint = nowtime.getTime();
     response.Avatar = response.Avatar + '?' + String(timeint);
@@ -138,7 +140,7 @@ class ChattingPage extends React.Component {
     websocket.onmessage = this.onReceiveMessageFromWebServer;
 
     this.setState({ websocketClient: websocket });
-    setInterval(() => {
+    var heartbeat = setInterval(() => {
       websocket.send(
         '{"messagetype": 0, "token": "' +
           localStorage.getItem(String(account) + 'token') +
@@ -149,6 +151,9 @@ class ChattingPage extends React.Component {
           '"}'
       );
     }, 10000);
+    websocket.onclose = () => {
+      clearInterval(heartbeat);
+    };
   }
 
   // 接收消息的回调函数
@@ -923,6 +928,21 @@ class ChattingPage extends React.Component {
     });
   }
 
+  // 退出登录
+  onExit() {
+    this.state.websocketClient.send(
+      '{"messagetype": 4, "token": "' +
+        this.userStore.userlogininfo.token +
+        '", "message": "", "sender":"' +
+        this.userStore.userlogininfo.useraccount +
+        '", "receiver":"","groupid":"","time":"' +
+        moment().format('YYYY-MM-DDTHH:mm:ssZ') +
+        '"}'
+    );
+    this.state.websocketClient.close();
+    this.userStore.userlogininfo = {};
+  }
+
   render() {
     const { userInfo } = this.state;
     return (
@@ -935,6 +955,7 @@ class ChattingPage extends React.Component {
             avatarUrl={userInfo.Avatar}
             username={userInfo.UserName}
             signature={userInfo.Signature}
+            onExit={this.onExit}
           ></UserInfoCard>
           <UserTab
             openNewChattingModal={this.onOpenChattingModal}

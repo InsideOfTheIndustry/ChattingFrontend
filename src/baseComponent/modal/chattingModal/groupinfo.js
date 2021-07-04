@@ -243,7 +243,6 @@ class GroupInfoOnTheSide extends React.Component {
               }
               id='usernameingroupinput'
               onPressEnter={() => {
-                console.log(document.getElementById('usernameingroupinput').value);
                 this.groupStore.UpdateUserNameInGroup(
                   this.props.userAccount,
                   localStorage.getItem(this.props.userAccount + 'token'),
