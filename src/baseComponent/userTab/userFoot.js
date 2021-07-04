@@ -36,9 +36,6 @@ class UserTabFoot extends React.Component {
           <Button onClick={this.props.createNewGroup} type='primary' icon={<TeamOutlined />}>
             创建群
           </Button>
-          <Button onClick={this.props.joinAGroup} type='primary' icon={<UsergroupAddOutlined />}>
-            加入群
-          </Button>
         </Space>
       </div>
     );
