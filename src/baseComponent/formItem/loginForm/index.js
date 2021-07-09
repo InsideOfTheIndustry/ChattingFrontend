@@ -32,6 +32,7 @@ class LoginForm extends React.Component {
     this.userLoginStore = this.props.userLoginStore;
 
     this.login = this.login.bind(this);
+    this.onSuccessLoginComfirm = this.onSuccessLoginComfirm.bind(this);
   }
 
   // 实现登录

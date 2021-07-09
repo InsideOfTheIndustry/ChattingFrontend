@@ -26,6 +26,7 @@ class CommonInfoCard extends React.Component {
     width: PropTypes.string,
     showonline: PropTypes.bool, // 是否显示在线情况 在头像上
     onlinestatus: PropTypes.bool, // 是否在线
+    groupid: PropTypes.string,
   };
 
   static defaultProps = {
@@ -42,6 +43,7 @@ class CommonInfoCard extends React.Component {
     width: '300px',
     showonline: false,
     onlinestatus: false,
+    groupid: '',
   };
   constructor(props) {
     super(props);
@@ -76,12 +78,31 @@ class CommonInfoCard extends React.Component {
 
   // 双击调出对话框
   onDoubleClick() {
-    this.props.openNewChattingModal(
-      this.props.commonAccount,
-      this.props.commonName,
-      this.props.avatarUrl,
-      this.props.messageList
-    );
+    switch (this.props.type) {
+      case 'askForPermissionrequest':
+        this.props.openNewChattingModal(
+          this.props.commonAccount,
+          this.props.commonName,
+          this.props.groupid,
+          this.props.messageList
+        );
+        break;
+      case 'permitOrNotForInvitAsk':
+        this.props.openNewChattingModal(
+          this.props.commonAccount,
+          this.props.commonName,
+          this.props.groupid,
+          this.props.messageList
+        );
+        break;
+      default:
+        this.props.openNewChattingModal(
+          this.props.commonAccount,
+          this.props.commonName,
+          this.props.avatarUrl,
+          this.props.messageList
+        );
+    }
   }
 
   renderTitle() {

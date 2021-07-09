@@ -32,17 +32,21 @@ class UserTab extends React.Component {
     messageOfAllChatting: PropTypes.object, // 正在联系的朋友们，包括发给你消息的以及你发出消息的。
     friendsinfo: PropTypes.array, // 朋友信息
     groupinfo: PropTypes.array, // 朋友信息
-    friendRequestList: PropTypes.array, // 好友请求信息列表
+    friendRequestList: PropTypes.object, // 好友请求信息列表
     haveNewRequestMessage: bool, // 是否有新的好友请求信息
     acceptOrReject: PropTypes.func, // 最终统一 但是这儿需要加以区分
     openNewChattingModal: PropTypes.func,
+    AskForGroupInvitPermissionList: PropTypes.object,
+    InviteRequestList: PropTypes.object,
   };
 
   static defaultProps = {
     messageOfAllChatting: {},
     friendsinfo: [],
     groupinfo: [],
-    friendRequestList: [],
+    friendRequestList: {},
+    AskForGroupInvitPermissionList: {},
+    InviteRequestList: {},
     acceptOrReject() {},
     openNewChattingModal() {},
   };
@@ -66,14 +70,16 @@ class UserTab extends React.Component {
   render() {
     var messageOfAllChatting = [];
     var friendRequestList = [];
+    var InviteRequestList = [];
+    var AskForGroupInvitPermissionList = [];
     var haveNewMessage = false;
+
     for (let key in this.props.messageOfAllChatting) {
       if (this.props.messageOfAllChatting[key].ifHaveNewMessage === true) {
         haveNewMessage = true;
       }
       messageOfAllChatting.push(this.props.messageOfAllChatting[key]);
     }
-
     // 排序最后需要换成时间
     messageOfAllChatting.sort(function (a, b) {
       return b.unReadMessageCount - a.unReadMessageCount;
@@ -86,10 +92,24 @@ class UserTab extends React.Component {
         friendCode: this.props.friendRequestList[key].friendCode,
       });
     }
-    // 排序最后需要换成时间
     friendRequestList.sort(function (a, b) {
       return b.sendTime - a.sendTime;
     });
+
+    for (let key in this.props.AskForGroupInvitPermissionList) {
+      AskForGroupInvitPermissionList.push(this.props.AskForGroupInvitPermissionList[key]);
+    }
+    AskForGroupInvitPermissionList.sort(function (a, b) {
+      return b.sendTime - a.sendTime;
+    });
+
+    for (let key in this.props.InviteRequestList) {
+      InviteRequestList.push(this.props.InviteRequestList[key]);
+    }
+    InviteRequestList.sort(function (a, b) {
+      return b.sendTime - a.sendTime;
+    });
+
     var onlinefriend = [];
     var notonlinefriend = [];
     for (var i = 0; i < this.props.friendsinfo.length; i++) {
@@ -204,11 +224,7 @@ class UserTab extends React.Component {
           </TabPane>
           <TabPane
             tab={
-              this.props.haveNewRequestMessage ? (
-                <Badge dot>好友请求信息</Badge>
-              ) : (
-                <span>好友请求信息</span>
-              )
+              this.props.haveNewRequestMessage ? <Badge dot>请求信息</Badge> : <span>请求信息</span>
             }
             key='friendRequest'
             className={'subtab'}
@@ -223,6 +239,34 @@ class UserTab extends React.Component {
                   messageList={[]}
                   avatarUrl={item.friendCode}
                   type={'friendrequest'}
+                ></CommonInfoCard>
+              );
+            })}
+            {InviteRequestList.map((item) => {
+              return (
+                <CommonInfoCard
+                  commonName={item.InviterName}
+                  openNewChattingModal={this.props.acceptOrRejectGroupInvite}
+                  commonAccount={item.InviterNameAccount}
+                  signature={'希望您加入群聊:' + item.GroupInfo + '!'}
+                  messageList={[item.GroupCode]}
+                  avatarUrl={item.InviterAvatar}
+                  type={'askForPermissionrequest'}
+                  groupid={item.Groupid}
+                ></CommonInfoCard>
+              );
+            })}
+            {AskForGroupInvitPermissionList.map((item) => {
+              return (
+                <CommonInfoCard
+                  commonName={item.AskerName}
+                  openNewChattingModal={this.props.permitOrNotForInvitAsk}
+                  commonAccount={item.AskerAccount}
+                  signature={'希望能添加' + item.InviterInfo + '进入群聊' + item.GroupInfo}
+                  messageList={[item.InviterAccount]}
+                  avatarUrl={item.AskerAvatar}
+                  groupid={item.Groupid}
+                  type={'permitOrNotForInvitAsk'}
                 ></CommonInfoCard>
               );
             })}
