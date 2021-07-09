@@ -12,14 +12,11 @@ import { Modal, Tabs, Divider, Input, Button, Space, Row, message, Drawer } from
 import { DashOutlined } from '@ant-design/icons';
 import ChattingPop from './chattingPop';
 import GroupInfoOnTheSide from './groupinfo';
-import { inject, observer } from 'mobx-react';
 import './index.css';
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
 
-@inject('userLoginStore')
-@observer
 class ChattingModal extends React.Component {
   static propsTypes = {
     handleOnCancel: PropTypes.func,
@@ -32,6 +29,7 @@ class ChattingModal extends React.Component {
     nowChattingFriend: PropTypes.string,
     websocketclient: PropTypes.object,
     userAccount: PropTypes.string,
+    usergroupforsearch: PropTypes.object,
   };
 
   static defaultProps = {
@@ -46,6 +44,7 @@ class ChattingModal extends React.Component {
     nowChattingFriend: '11218842',
     websocketclient: {},
     userAccount: '',
+    usergroupforsearch: {},
   };
 
   constructor(props) {
@@ -57,7 +56,6 @@ class ChattingModal extends React.Component {
       drawerVisible: false,
       drawVisibility: 'hidden',
     };
-    this.userStore = this.props.userLoginStore;
 
     this.handleOnCancel = this.handleOnCancel.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
@@ -158,6 +156,7 @@ class ChattingModal extends React.Component {
   onEdit(targetKey, action) {
     switch (action) {
       case 'remove':
+        console.log(targetKey);
         this.props.onRemoveOneChattingTab(targetKey);
 
         break;
@@ -206,7 +205,6 @@ class ChattingModal extends React.Component {
     for (let key in this.props.messageInTheChattingModal) {
       messageInTheChattingModal.push(this.props.messageInTheChattingModal[key]);
     }
-    // console.log(this.props.nowChattingFriend);
 
     return (
       <div>
@@ -223,7 +221,7 @@ class ChattingModal extends React.Component {
                 <TabPane
                   tab={
                     pane.friendAccount.slice(0, 5) === 'group'
-                      ? this.userStore.usergroupforsearch[parseInt(pane.friendAccount.substring(5))]
+                      ? this.props.usergroupforsearch[parseInt(pane.friendAccount.substring(5))]
                           .GroupName +
                         '(' +
                         pane.friendAccount +
@@ -231,16 +229,18 @@ class ChattingModal extends React.Component {
                       : pane.friendName + '(' + pane.friendAccount + ')'
                   }
                   key={pane.friendAccount}
-                  closable={pane.closable}
+                  closable={true}
                 >
                   {
                     /* 侧边栏 类似微信 */
-                    pane.friendAccount.slice(0, 5) === 'group' ? (
+                    pane.friendAccount.slice(0, 5) !== 'group' ? (
+                      ''
+                    ) : (
                       <div>
                         <div style={{ visibility: this.state.drawVisibility }}>
                           <Drawer
                             title={
-                              this.userStore.usergroupforsearch[
+                              this.props.usergroupforsearch[
                                 parseInt(pane.friendAccount.substring(5))
                               ].GroupName
                             }
@@ -254,6 +254,11 @@ class ChattingModal extends React.Component {
                           >
                             <div>
                               <GroupInfoOnTheSide
+                                type={
+                                  this.props.nowChattingFriend.slice(0, 5) === 'group'
+                                    ? 'group'
+                                    : 'friend'
+                                }
                                 groupId={this.props.nowChattingFriend.substring(5)}
                                 websocketclient={this.props.websocketclient}
                                 userAccount={this.props.userAccount}
@@ -271,8 +276,6 @@ class ChattingModal extends React.Component {
                           ></Button>
                         </Row>
                       </div>
-                    ) : (
-                      ''
                     )
                   }
 

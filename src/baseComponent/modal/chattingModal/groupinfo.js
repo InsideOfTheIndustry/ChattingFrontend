@@ -12,6 +12,7 @@ import { PlusOutlined, ManOutlined, WomanOutlined } from '@ant-design/icons';
 import './index.css';
 import { inject, observer } from 'mobx-react';
 import EditGroupModal from './editGroupModal';
+import InviteFriendIntoGroupModal from './inviteFriendIntoGroupModal';
 
 @inject('userLoginStore')
 @inject('groupStore')
@@ -21,12 +22,14 @@ class GroupInfoOnTheSide extends React.Component {
     websocketclient: PropTypes.object,
     groupId: PropTypes.string,
     userAccount: PropTypes.string,
+    type: PropTypes.string,
   };
 
   static defaultProps = {
     websocketclient: {},
     groupId: '',
     userAccount: '',
+    type: 'friend',
   };
 
   constructor(props) {
@@ -37,6 +40,7 @@ class GroupInfoOnTheSide extends React.Component {
       groupWithMemberList: [],
       editButtonDisable: true,
       editGroupModalVisible: false,
+      inviteFriendIntoGroupModalVisible: false,
     };
 
     this.userStore = this.props.userLoginStore;
@@ -46,12 +50,12 @@ class GroupInfoOnTheSide extends React.Component {
     this.openEditGroupModal = this.openEditGroupModal.bind(this);
     this.updateGroupInfo = this.updateGroupInfo.bind(this);
     this.onUploadAvatar = this.onUploadAvatar.bind(this);
+    this.onCloseInviteFriendModal = this.onCloseInviteFriendModal.bind(this);
+    this.onOpendInviteFriendModal = this.onOpendInviteFriendModal.bind(this);
   }
 
   async componentDidMount() {
     var groupinfo = await this.groupStore.QueryGroupInfo(this.props.groupId);
-    groupinfo.CreateAt = groupinfo.CreateAt.slice(0, 10);
-    var groupmemberlist = [];
 
     if (this.props.userAccount === String(groupinfo.GroupOwner)) {
       this.setState({
@@ -60,12 +64,11 @@ class GroupInfoOnTheSide extends React.Component {
     }
     groupinfo.GroupOwner =
       this.groupStore.groupWithMember[this.props.groupId][groupinfo.GroupOwner].UserName;
-    for (let key in this.groupStore.groupWithMember[this.props.groupId]) {
-      groupmemberlist.push(this.groupStore.groupWithMember[this.props.groupId][key]);
-    }
+
+    groupinfo.CreateAt = groupinfo.CreateAt.slice(0, 10);
+
     this.setState({
       groupinfo: groupinfo,
-      groupWithMemberList: groupmemberlist,
     });
   }
 
@@ -143,16 +146,34 @@ class GroupInfoOnTheSide extends React.Component {
     });
   }
 
+  // 打开邀请界面
+  onOpendInviteFriendModal() {
+    this.setState({
+      inviteFriendIntoGroupModalVisible: true,
+    });
+  }
+
+  // 关闭邀请界面
+  onCloseInviteFriendModal() {
+    this.setState({
+      inviteFriendIntoGroupModalVisible: false,
+    });
+  }
+
   render() {
-    return (
+    var groupmemberlist = [];
+    for (let key in this.groupStore.groupWithMember[this.props.groupId]) {
+      groupmemberlist.push(this.groupStore.groupWithMember[this.props.groupId][key]);
+    }
+    return this.props.type === 'group' ? (
       <div>
         <Row justify='space-between'>
           <div className={'groupmembershowstyle'}>
-            <Button icon={<PlusOutlined />}></Button>
+            <Button icon={<PlusOutlined />} onClick={this.onOpendInviteFriendModal}></Button>
             <div>添加</div>
           </div>
 
-          {this.state.groupWithMemberList.map((member) => {
+          {groupmemberlist.map((member) => {
             return (
               <div className={'groupmembershowstyle'}>
                 <Popover
@@ -261,7 +282,18 @@ class GroupInfoOnTheSide extends React.Component {
           updateGroupInfo={this.updateGroupInfo}
           onUploadAvatar={this.onUploadAvatar}
         ></EditGroupModal>
+        <InviteFriendIntoGroupModal
+          visible={this.state.inviteFriendIntoGroupModalVisible}
+          onCancel={this.onCloseInviteFriendModal}
+          userfriend={this.userStore.friends}
+          memberInGroup={this.groupStore.groupWithMember[this.props.groupId]}
+          websocketclient={this.props.websocketclient}
+          userAccount={this.props.userAccount}
+          groupId={this.props.groupId}
+        ></InviteFriendIntoGroupModal>
       </div>
+    ) : (
+      ''
     );
   }
 }

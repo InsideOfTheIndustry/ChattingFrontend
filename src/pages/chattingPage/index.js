@@ -19,6 +19,8 @@ import ChangeAvatarModal from '../../baseComponent/modal/changeUserinfoModel/use
 import UserInfoEditModal from '../../baseComponent/modal/changeUserinfoModel/userinfo';
 import CreateNewGroupModal from '../../baseComponent/modal/newGroupModal/index';
 import ContentPageRouter from '../contentPage/contentPageInit';
+import AcceptOrNotForGroupInviteModal from '../../baseComponent/modal/acceptorrejectgroupinvite/index';
+import PermitOrNotAskForInviteModal from '../../baseComponent/modal/permitornotaskinvitemodal/index';
 
 import './index.css';
 
@@ -37,6 +39,8 @@ class ChattingPage extends React.Component {
       addFriendModalVisible: false,
       chattingModalVisible: false,
       acceptFriendReqModalVisible: false,
+      acceptOrNotForGroupInviteModalVisible: false,
+      PermitOrNotAskForInviteModalVisible: false,
       changeAvatarModalvisible: false,
       editUserinfoModalVisible: false,
       createNewGroupModalVisible: false,
@@ -57,9 +61,19 @@ class ChattingPage extends React.Component {
 
       // 添加好友相关
       friendRequestList: {}, // 字典形式: 以userAccount为key 具体内部 包含 sendTime等字段
+      AskForGroupInvitPermissionList: {}, // 询问是否允许添加请求 字典形式: 以请求用户+受邀请用户+群聊id作为key以冒号隔开
+      InviteRequestList: {}, // 某好友邀请你进入某群 字典形式: 以请求用户+群聊id作为key 以冒号隔开
       haveNewFriendRequest: false,
       nowOpenFriendReqAccount: '111', // 目前打开的想要添加您为好友的用户账号
       nowOpenFriendReqFriendCode: '111', // 目前打开的想要添加您为好友的用户的随机好友码
+
+      GroupInvitePermissionAsker: '',
+      GroupInvitePermissionGroupid: '',
+      GroupPermissionInviter: '',
+
+      GroupInviter: '',
+      GroupInviteCode: '',
+      GroupInviteGroupid: '',
     };
 
     this.userStore = this.props.userLoginStore;
@@ -89,6 +103,10 @@ class ChattingPage extends React.Component {
     this.createNewGroup = this.createNewGroup.bind(this);
     this.onCloseCreateNewGroupModal = this.onCloseCreateNewGroupModal.bind(this);
     this.onExit = this.onExit.bind(this);
+    this.onOpenAcceptOrRejectGroupInvite = this.onOpenAcceptOrRejectGroupInvite.bind(this);
+    this.acceptOrRejectGroupInvite = this.acceptOrRejectGroupInvite.bind(this);
+    this.onOpenPermitOrNotForInvitAsk = this.onOpenPermitOrNotForInvitAsk.bind(this);
+    this.permitOrNotForInvitAsk = this.permitOrNotForInvitAsk.bind(this);
   }
 
   async componentDidMount() {
@@ -226,6 +244,84 @@ class ChattingPage extends React.Component {
         }
 
         break;
+
+      case 6:
+        // 邀请加入群聊
+        var InviteRequestList = this.state.InviteRequestList;
+        var groupid = replyMessage.groupid;
+        var inviter = replyMessage.sender;
+
+        var inviterinfo = await this.userStore.GetUserInfo(
+          this.userStore.userlogininfo.token,
+          this.userStore.userlogininfo.useraccount,
+          inviter
+        );
+
+        var groupinfo = await this.groupStore.QueryGroupInfo(groupid);
+        InviteRequestList[inviter + ':' + groupid] = {
+          InviterName: inviterinfo.UserName,
+          InviterNameAccount: String(inviterinfo.UserAccount),
+          GroupInfo: String(groupinfo.GroupName) + '(' + String(groupinfo.Groupid) + ')',
+          InviterAvatar: String(inviterinfo.Avatar),
+          GroupCode: replyMessage.message,
+          Groupid: groupid,
+        };
+        this.setState({
+          InviteRequestList: InviteRequestList,
+          haveNewFriendRequest: true,
+        });
+        break;
+
+      case 7:
+        // 征询群主同意
+        var AskForGroupInvitPermissionList = this.state.AskForGroupInvitPermissionList;
+        var groupid = replyMessage.groupid;
+        var asker = replyMessage.sender;
+        var inviter = replyMessage.message;
+        var askerinfo = await this.userStore.GetUserInfo(
+          this.userStore.userlogininfo.token,
+          this.userStore.userlogininfo.useraccount,
+          replyMessage.sender
+        );
+
+        var inviterinfo = await this.userStore.GetUserInfo(
+          this.userStore.userlogininfo.token,
+          this.userStore.userlogininfo.useraccount,
+          inviter
+        );
+        console.log(inviterinfo);
+        var groupinfo = await this.groupStore.QueryGroupInfo(groupid);
+
+        AskForGroupInvitPermissionList[asker + ':' + inviter + ':' + groupid] = {
+          AskerName: String(askerinfo.UserName),
+          AskerAccount: String(askerinfo.UserAccount),
+          AskerAvatar: String(askerinfo.Avatar),
+          InviterInfo: String(inviterinfo.UserName) + '(' + String(inviterinfo.UserAccount) + ')',
+          GroupInfo: String(groupinfo.GroupName) + '(' + String(groupinfo.Groupid) + ')',
+          InviterAccount: String(inviterinfo.UserAccount),
+          Groupid: groupid,
+        };
+        this.setState({
+          AskForGroupInvitPermissionList: AskForGroupInvitPermissionList,
+          haveNewFriendRequest: true,
+        });
+        break;
+      case 8:
+        notification.error({
+          message: 'Notification',
+          description: '群主拒绝' + replyMessage.message + '加入群聊：' + replyMessage.groupid,
+        });
+        break;
+      case 11:
+        notification.info({
+          message: 'Notification',
+          description: '用户' + replyMessage.sender + '拒绝加入群聊：' + replyMessage.groupid,
+        });
+        break;
+      case 12:
+        // 用户同意入群
+        await this.groupStore.QueryGroupMemberInfo(replyMessage.groupid);
+
       case 22:
         // 22 代表群聊信息
         // console.log(replyMessage);
@@ -724,7 +820,6 @@ class ChattingPage extends React.Component {
       nowOpenFriendReqFriendCode: friendCode,
     });
   }
-
   // 拒绝添加 点击x号默认拒绝
   rejectFriendRequest() {
     var friendRequestList = this.state.friendRequestList;
@@ -765,6 +860,123 @@ class ChattingPage extends React.Component {
       localStorage.getItem(String(this.state.account) + 'token'),
       this.state.account
     );
+  }
+
+  // onOpenPermitOrNotForInvitAsk 同意或者拒绝邀请询问邀请框
+  async onOpenPermitOrNotForInvitAsk(userAccount, second, groupid, Inviterlist) {
+    var groupinfo = await this.groupStore.QueryGroupInfo(groupid);
+    var groupinfoshortly = String(groupinfo.GroupName) + '(' + String(groupinfo.Groupid) + ')';
+
+    var inviter = await this.userStore.GetUserInfo(
+      localStorage.getItem(String(this.state.account) + 'token'),
+      this.state.account,
+      Inviterlist[0]
+    );
+
+    var asker = await this.userStore.GetUserInfo(
+      localStorage.getItem(String(this.state.account) + 'token'),
+      this.state.account,
+      userAccount
+    );
+
+    this.setState({
+      PermitOrNotAskForInviteModalVisible: true,
+      GroupInvitePermissionAsker: userAccount,
+      GroupInvitePermissionAskerinfo:
+        String(asker.UserName) + '(' + String(asker.UserAccount) + ')',
+      GroupPermissionInviter: Inviterlist[0],
+      GroupPermissionInviterInfo:
+        String(inviter.UserName) + '(' + String(inviter.UserAccount) + ')',
+      GroupInvitePermissionGroupid: groupid,
+      GroupInvitePermissionGroupinfo: groupinfoshortly,
+    });
+  }
+
+  // 同意或拒绝权限
+  permitOrNotForInvitAsk(status) {
+    var askForGroupInvitPermissionList = this.state.AskForGroupInvitPermissionList;
+    delete askForGroupInvitPermissionList[
+      this.state.GroupInvitePermissionAsker +
+        ':' +
+        this.state.GroupPermissionInviter +
+        ':' +
+        this.state.GroupInvitePermissionGroupid
+    ];
+    if (status === true) {
+      this.onSendMessage(
+        9,
+        localStorage.getItem(String(this.state.account) + 'token'),
+        this.state.GroupPermissionInviter,
+        this.state.account,
+        this.state.GroupInvitePermissionAsker,
+        this.state.GroupInvitePermissionGroupid
+      );
+    } else {
+      this.onSendMessage(
+        8,
+        localStorage.getItem(String(this.state.account) + 'token'),
+        this.state.GroupPermissionInviter,
+        this.state.account,
+        this.state.GroupInvitePermissionAsker,
+        this.state.GroupInvitePermissionGroupid
+      );
+    }
+    this.setState({
+      AskForGroupInvitPermissionList: askForGroupInvitPermissionList,
+      PermitOrNotAskForInviteModalVisible: false,
+      haveNewFriendRequest: false,
+    });
+  }
+
+  // 打开接受或拒绝加入群聊对话框
+  async onOpenAcceptOrRejectGroupInvite(userAccount, second, groupid, codelist) {
+    var groupinfo = await this.groupStore.QueryGroupInfo(groupid);
+    console.log(groupid);
+    var groupinfoshortly = String(groupinfo.GroupName) + '(' + String(groupinfo.Groupid) + ')';
+
+    var response = await this.userStore.GetUserInfo(
+      localStorage.getItem(String(this.state.account) + 'token'),
+      this.state.account,
+      userAccount
+    );
+    this.setState({
+      acceptOrNotForGroupInviteModalVisible: true,
+      GroupInviter: userAccount,
+      GroupInviteCode: codelist[0],
+      GroupInviteGroupid: groupid,
+      GroupInviteGroupinfo: groupinfoshortly,
+      GroupInviterinfo: String(response.UserName) + '(' + String(response.UserAccount) + ')',
+    });
+  }
+
+  // 接受或拒绝加入群聊
+  acceptOrRejectGroupInvite(status) {
+    var InviteRequestList = this.state.InviteRequestList;
+    delete InviteRequestList[this.state.GroupInviter + ':' + this.state.GroupInviteGroupid];
+    if (status === true) {
+      this.onSendMessage(
+        10,
+        localStorage.getItem(String(this.state.account) + 'token'),
+        this.state.GroupInviteCode,
+        this.state.account,
+        this.state.GroupInviter,
+        this.state.GroupInviteGroupid
+      );
+    } else {
+      this.onSendMessage(
+        11,
+        localStorage.getItem(String(this.state.account) + 'token'),
+        this.state.GroupInviteCode,
+        this.state.account,
+        this.state.GroupInviter,
+        this.state.GroupInviteGroupid
+      );
+    }
+    this.setState({
+      InviteRequestList: InviteRequestList,
+      acceptOrNotForGroupInviteModalVisible: false,
+      haveNewFriendRequest: false,
+    });
   }
 
   // 发送信息函数
@@ -961,9 +1173,13 @@ class ChattingPage extends React.Component {
             openNewChattingModal={this.onOpenChattingModal}
             messageOfAllChatting={this.state.messageOfAllChatting}
             acceptOrReject={this.acceptOrReject}
+            acceptOrRejectGroupInvite={this.onOpenAcceptOrRejectGroupInvite}
+            permitOrNotForInvitAsk={this.onOpenPermitOrNotForInvitAsk}
             friendsinfo={this.userStore.friends}
             groupinfo={this.userStore.usergroup}
             friendRequestList={this.state.friendRequestList}
+            InviteRequestList={this.state.InviteRequestList}
+            AskForGroupInvitPermissionList={this.state.AskForGroupInvitPermissionList}
             haveNewRequestMessage={this.state.haveNewFriendRequest}
           ></UserTab>
           <UserTabFoot
@@ -977,6 +1193,7 @@ class ChattingPage extends React.Component {
           </Content>
         </Layout>
         <ChattingModal
+          usergroupforsearch={this.userStore.usergroupforsearch}
           messageInTheChattingModal={this.state.messageInTheChattingModal}
           handleOnCancel={this.onCloseChattingModal}
           visible={this.state.chattingModalVisible}
@@ -1000,6 +1217,28 @@ class ChattingPage extends React.Component {
           rejectRequest={this.rejectFriendRequest}
           handleOnCancel={this.rejectFriendRequest}
         ></AcceptFriendRequestModal>
+        <AcceptOrNotForGroupInviteModal
+          visible={this.state.acceptOrNotForGroupInviteModalVisible}
+          userAccount={this.state.account}
+          groupid={this.state.GroupInviteGroupid}
+          inviterAccount={this.state.GroupInviter}
+          acceptOrRejectRequest={this.acceptOrRejectGroupInvite}
+          handleOnCancel={this.acceptOrRejectGroupInvite}
+          groupinfo={this.state.GroupInviteGroupinfo}
+          inviterinfo={this.state.GroupInviterinfo}
+        ></AcceptOrNotForGroupInviteModal>
+        <PermitOrNotAskForInviteModal
+          visible={this.state.PermitOrNotAskForInviteModalVisible}
+          userAccount={this.state.account}
+          groupid={this.state.GroupInvitePermissionGroupid}
+          inviterAccount={this.state.GroupPermissionInviter}
+          askerAccount={this.state.GroupInvitePermissionAsker}
+          groupinfo={this.state.GroupInvitePermissionGroupinfo}
+          inviterinfo={this.state.GroupPermissionInviterInfo}
+          askerinfo={this.state.GroupInvitePermissionAskerinfo}
+          acceptOrRejectRequest={this.permitOrNotForInvitAsk}
+          handleOnCancel={this.permitOrNotForInvitAsk}
+        ></PermitOrNotAskForInviteModal>
         <ChangeAvatarModal
           visible={this.state.changeAvatarModalvisible}
           handleOnCancel={this.onCancelChangeAvatarModal}
